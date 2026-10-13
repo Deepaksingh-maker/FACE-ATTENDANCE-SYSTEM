@@ -26,17 +26,29 @@ except (ImportError, ModuleNotFoundError):
         )
 
 
-# Load OpenCV Cascades if using OpenCV
+# Load OpenCV Cascades if using OpenCV. Some cloud builds can install the
+# Python package without its cascade data, so fail with a useful message.
 if not USE_DLIB and cv2 is not None:
-    _cascade_frontal = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    )
-    _cascade_alt = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_alt2.xml"
-    )
-    _cascade_profile = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_profileface.xml"
-    )
+    try:
+        cascade_dir = cv2.data.haarcascades
+        _cascade_frontal = cv2.CascadeClassifier(
+            cascade_dir + "haarcascade_frontalface_default.xml"
+        )
+        _cascade_alt = cv2.CascadeClassifier(
+            cascade_dir + "haarcascade_frontalface_alt2.xml"
+        )
+        _cascade_profile = cv2.CascadeClassifier(
+            cascade_dir + "haarcascade_profileface.xml"
+        )
+        if any(cascade.empty() for cascade in (
+            _cascade_frontal,
+            _cascade_alt,
+            _cascade_profile,
+        )):
+            raise OSError("OpenCV Haar cascade data could not be loaded.")
+    except (AttributeError, OSError, cv2.error) as exc:
+        _cascade_frontal = _cascade_alt = _cascade_profile = None
+        DEPENDENCY_ERROR = f"OpenCV face detector could not be initialized: {exc}"
 else:
     _cascade_frontal = _cascade_alt = _cascade_profile = None
 
