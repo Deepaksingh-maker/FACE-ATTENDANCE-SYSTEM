@@ -7,17 +7,27 @@ cascade classifiers & normalized feature embedding.
 
 import numpy as np
 
+DEPENDENCY_ERROR = None
+
 # Try importing face_recognition first
 try:
     import face_recognition
     USE_DLIB = True
+    cv2 = None
 except (ImportError, ModuleNotFoundError):
     USE_DLIB = False
-    import cv2
+    try:
+        import cv2
+    except ModuleNotFoundError:
+        cv2 = None
+        DEPENDENCY_ERROR = (
+            "OpenCV is not installed. Install it with: "
+            "python -m pip install -r requirements.txt"
+        )
 
 
 # Load OpenCV Cascades if using OpenCV
-if not USE_DLIB:
+if not USE_DLIB and cv2 is not None:
     _cascade_frontal = cv2.CascadeClassifier(
         cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
     )
@@ -27,6 +37,13 @@ if not USE_DLIB:
     _cascade_profile = cv2.CascadeClassifier(
         cv2.data.haarcascades + "haarcascade_profileface.xml"
     )
+else:
+    _cascade_frontal = _cascade_alt = _cascade_profile = None
+
+
+def _require_cv2():
+    if cv2 is None:
+        raise ModuleNotFoundError(DEPENDENCY_ERROR or "OpenCV is required for face detection.")
 
 
 def _cv2_detect_faces(image_np):
@@ -34,6 +51,7 @@ def _cv2_detect_faces(image_np):
     Detects face bounding boxes (x, y, w, h) using OpenCV Haar Cascades with multiple fallbacks.
     Returns list of (x, y, w, h).
     """
+    _require_cv2()
     gray = cv2.cvtColor(image_np, cv2.COLOR_RGB2GRAY)
     gray_eq = cv2.equalizeHist(gray)
 
@@ -82,6 +100,7 @@ def _cv2_encode_face(image_np, face_box):
     """
     Computes a normalized 128-element feature vector from cropped face region using OpenCV.
     """
+    _require_cv2()
     x, y, w, h = face_box
     # Ensure bounding box is within bounds
     img_h, img_w = image_np.shape[:2]

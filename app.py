@@ -25,6 +25,11 @@ st.set_page_config(
     layout="wide",
 )
 
+if getattr(fu, "DEPENDENCY_ERROR", None):
+    st.error(fu.DEPENDENCY_ERROR)
+    st.info("If you are launching this app in a fresh environment, run: `python -m pip install -r requirements.txt`")
+    st.stop()
+
 db.init_db()
 
 
