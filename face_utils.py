@@ -30,14 +30,24 @@ except (ImportError, ModuleNotFoundError):
 # Python package without its cascade data, so fail with a useful message.
 if not USE_DLIB and cv2 is not None:
     try:
+        cascade_classifier = getattr(cv2, "CascadeClassifier", None)
+        if cascade_classifier is None:
+            cascade_classifier = getattr(
+                getattr(cv2, "objdetect", None),
+                "CascadeClassifier",
+                None,
+            )
+        if cascade_classifier is None:
+            raise AttributeError("OpenCV CascadeClassifier API is unavailable.")
+
         cascade_dir = cv2.data.haarcascades
-        _cascade_frontal = cv2.CascadeClassifier(
+        _cascade_frontal = cascade_classifier(
             cascade_dir + "haarcascade_frontalface_default.xml"
         )
-        _cascade_alt = cv2.CascadeClassifier(
+        _cascade_alt = cascade_classifier(
             cascade_dir + "haarcascade_frontalface_alt2.xml"
         )
-        _cascade_profile = cv2.CascadeClassifier(
+        _cascade_profile = cascade_classifier(
             cascade_dir + "haarcascade_profileface.xml"
         )
         if any(cascade.empty() for cascade in (
