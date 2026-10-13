@@ -38,6 +38,11 @@ every OS).
 pip install -r requirements.txt
 ```
 
+The default deployment uses the OpenCV vision engine. The optional
+`face_recognition` package is not included in the deployment requirements
+because its `dlib` dependency is not reliably available on Streamlit Cloud.
+The app automatically uses OpenCV when `face_recognition` is unavailable.
+
 > If `pip install face_recognition` fails while building `dlib`, install
 > dlib first with conda (`conda install -c conda-forge dlib`) then re-run
 > `pip install face_recognition`.
